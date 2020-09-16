@@ -15,12 +15,7 @@ export type UpdateRouteAction = {
   url: string;
 };
 
-export type HistoryGoBackAction = {
-  type: "HISTORY_GO_BACK";
-  steps: number;
-};
-
-export type Actions = UpdateRouteAction | HistoryGoBackAction;
+export type Actions = UpdateRouteAction;
 
 /*
   Reducer which handles UPDATE_ROUTE.
@@ -32,15 +27,7 @@ export function reducer(state: IState, action: Actions): IState {
       return {
         ...state,
         url: action.url,
-        urlStack: state.urlStack.concat(action.url),
         hasLoaded: true,
-      };
-    case "HISTORY_GO_BACK":
-      const newStack = state.urlStack.slice(0, action.steps);
-      return {
-        ...state,
-        url: newStack.slice(-1)[0],
-        urlStack: newStack,
       };
     default:
       return state;
@@ -50,7 +37,6 @@ export function reducer(state: IState, action: Actions): IState {
 /* Store */
 export type IState = {
   url: string;
-  urlStack: string[];
   hasLoaded: boolean;
 };
 
@@ -65,7 +51,7 @@ export const Context = createContext<RoutingStore>(undefined as any);
 */
 export async function navigateTo(url: string) {
   window.history.pushState({}, "", url);
-  updateRoute(url);
+  updateRoute();
 }
 
 /*
@@ -74,21 +60,18 @@ export async function navigateTo(url: string) {
 export async function goBack(steps = -1) {
   if (window.history.length > 1) {
     window.history.go(steps);
-    historyGoBack(steps);
+    updateRoute();
   }
 }
 
 let queuedUrlChange: string | undefined = undefined;
-export async function updateRoute(url: string) {
+export async function updateRoute() {
+  const url = window.location.href;
   if (globalDispatch && globalState.url !== url) {
     globalDispatch({ type: "UPDATE_ROUTE", url });
   } else {
     queuedUrlChange = url;
   }
-}
-
-export async function historyGoBack(steps: number) {
-  globalDispatch({ type: "HISTORY_GO_BACK", steps });
 }
 
 /*
@@ -121,7 +104,7 @@ export const Link: React.FC<LinkProps> = (props: LinkProps) => {
 function createClickHandler(url: string) {
   return (ev: any) => {
     window.history.pushState({}, "", url);
-    updateRoute(url);
+    updateRoute();
     ev.preventDefault();
   };
 }
@@ -137,20 +120,18 @@ export type MatchResult = {
 };
 
 export function matchExactUrl(
-  url: string,
   pattern: string,
   fn: (match: MatchResult) => ReactElement
 ): ReactElement | false {
-  const result = match(url, pattern, { exact: true });
+  const result = match(pattern, { exact: true });
   return result === false ? false : fn(result);
 }
 
 export function matchUrl(
-  url: string,
   pattern: string,
   fn: (match: MatchResult) => ReactElement
 ): ReactElement | false {
-  const result = match(url, pattern, { exact: false });
+  const result = match(pattern, { exact: false });
   return result === false ? false : fn(result);
 }
 
@@ -159,10 +140,11 @@ export type MatchOptions = {
 };
 
 export function match(
-  url: string,
   pattern: string,
   options: MatchOptions = { exact: true }
 ): MatchResult | false {
+  const url = window.location.href;
+
   const lcaseUrl = url.toLowerCase();
 
   const fixedUrl = ["http://", "https://"].some((prefix) =>
@@ -223,7 +205,7 @@ export function match(
   }
 }
 
-const initialState: IState = { url: "", urlStack: [], hasLoaded: false };
+const initialState: IState = { url: "", hasLoaded: false };
 
 export function RoutingProvider(props: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
