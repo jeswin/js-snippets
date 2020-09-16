@@ -4,6 +4,7 @@ import { createContext, useReducer } from "react";
 import { ReactNode } from "react";
 import { IStore } from "../types";
 
+let globalState: IState;
 let globalDispatch: React.Dispatch<Actions>;
 
 /*
@@ -31,14 +32,15 @@ export function reducer(state: IState, action: Actions): IState {
       return {
         ...state,
         url: action.url,
-        urlStack: state.urlStack.concat(action.url)
+        urlStack: state.urlStack.concat(action.url),
+        hasLoaded: true,
       };
     case "HISTORY_GO_BACK":
       const newStack = state.urlStack.slice(0, action.steps);
       return {
         ...state,
         url: newStack.slice(-1)[0],
-        urlStack: newStack
+        urlStack: newStack,
       };
     default:
       return state;
@@ -49,6 +51,7 @@ export function reducer(state: IState, action: Actions): IState {
 export type IState = {
   url: string;
   urlStack: string[];
+  hasLoaded: boolean;
 };
 
 export type RoutingStore = IStore<IState, Actions>;
@@ -75,8 +78,13 @@ export async function goBack(steps = -1) {
   }
 }
 
+let queuedUrlChange: string | undefined = undefined;
 export async function updateRoute(url: string) {
-  globalDispatch({ type: "UPDATE_ROUTE", url });
+  if (globalDispatch && globalState.url !== url) {
+    globalDispatch({ type: "UPDATE_ROUTE", url });
+  } else {
+    queuedUrlChange = url;
+  }
 }
 
 export async function historyGoBack(steps: number) {
@@ -89,11 +97,18 @@ export async function historyGoBack(steps: number) {
 export type LinkProps = {
   href: string;
   children?: ReactNode;
+  style?: React.CSSProperties;
+  className?: string;
 };
 
 export const Link: React.FC<LinkProps> = (props: LinkProps) => {
   return (
-    <a onClick={createClickHandler(props.href)} href="#">
+    <a
+      style={props.style}
+      onClick={createClickHandler(props.href)}
+      href={props.href}
+      className={props.className}
+    >
       {props.children}
     </a>
   );
@@ -150,7 +165,7 @@ export function match(
 ): MatchResult | false {
   const lcaseUrl = url.toLowerCase();
 
-  const fixedUrl = ["http://", "https://"].some(prefix =>
+  const fixedUrl = ["http://", "https://"].some((prefix) =>
     lcaseUrl.startsWith(prefix)
   )
     ? lcaseUrl
@@ -180,7 +195,7 @@ export function match(
     let match: MatchResult = {
       params: {},
       matchedPath: "",
-      currentPath: urlObject.pathname
+      currentPath: urlObject.pathname,
     };
 
     for (let i = 0; i < patternParts.length; i++) {
@@ -208,11 +223,17 @@ export function match(
   }
 }
 
-const initialState: IState = { url: "", urlStack: [] };
+const initialState: IState = { url: "", urlStack: [], hasLoaded: false };
 
 export function RoutingProvider(props: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  globalState = state;
   globalDispatch = dispatch;
+
+  if (queuedUrlChange && queuedUrlChange !== state.url) {
+    globalDispatch({ type: "UPDATE_ROUTE", url: queuedUrlChange });
+    queuedUrlChange = undefined;
+  }
 
   return (
     <Context.Provider value={{ state, dispatch }}>
