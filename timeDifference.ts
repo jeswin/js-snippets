@@ -1,6 +1,6 @@
 // Thanks to fearofawhackplanet https://stackoverflow.com/questions/6108819/javascript-timestamp-to-relative-time
 
-export function timeDifference(current: number, previous: number) {
+export default function timeDifference(current: number, previous: number) {
   var msPerMinute = 60 * 1000;
   var msPerHour = msPerMinute * 60;
   var msPerDay = msPerHour * 24;
