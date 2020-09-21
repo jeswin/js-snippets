@@ -54,9 +54,6 @@ export async function updateRoute() {
   }
 }
 
-/*
-  Create an anchor which redirects to a url. Dispatches an UPDATE_ROUTE action which changes the current url in the state. 
-*/
 export type LinkProps = {
   href: string;
   children?: ReactNode;
