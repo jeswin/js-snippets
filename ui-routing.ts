@@ -1,46 +1,21 @@
 import * as React from "react";
 import { ReactElement } from "react";
-import { createContext, useReducer } from "react";
+import { createContext, useState } from "react";
 import { ReactNode } from "react";
-import { IStore } from "../types";
 
-let globalState: IState;
-let globalDispatch: React.Dispatch<Actions>;
-
-/*
-  Type of Actions
-*/
-export type UpdateRouteAction = {
-  type: "UPDATE_ROUTE";
-  url: string;
-};
-
-export type Actions = UpdateRouteAction;
-
-/*
-  Reducer which handles UPDATE_ROUTE.
-  Changes the path in state.
-*/
-export function reducer(state: IState, action: Actions): IState {
-  switch (action.type) {
-    case "UPDATE_ROUTE":
-      return {
-        ...state,
-        url: action.url,
-        hasLoaded: true,
-      };
-    default:
-      return state;
-  }
-}
+let globalState: RoutingState;
+let globalSetState: React.Dispatch<React.SetStateAction<RoutingState>>;
 
 /* Store */
-export type IState = {
+export type RoutingState = {
   url: string;
   hasLoaded: boolean;
 };
 
-export type RoutingStore = IStore<IState, Actions>;
+export type RoutingStore = {
+  state: RoutingState;
+  setState: React.Dispatch<React.SetStateAction<RoutingState>>;
+};
 
 /* Context */
 export const Context = createContext<RoutingStore>(undefined as any);
@@ -65,10 +40,15 @@ export async function goBack(steps = -1) {
 }
 
 let queuedUrlChange: string | undefined = undefined;
+
 export async function updateRoute() {
   const url = window.location.href;
-  if (globalDispatch && globalState.url !== url) {
-    globalDispatch({ type: "UPDATE_ROUTE", url });
+  if (globalSetState && globalState.url !== url) {
+    globalSetState((state) => ({
+      ...state,
+      hasLoaded: true,
+      url,
+    }));
   } else {
     queuedUrlChange = url;
   }
@@ -205,20 +185,25 @@ export function match(
   }
 }
 
-const initialState: IState = { url: "", hasLoaded: false };
+const initialState: RoutingState = { url: "", hasLoaded: false };
 
 export function RoutingProvider(props: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, setState] = useState(initialState);
   globalState = state;
-  globalDispatch = dispatch;
+  globalSetState = setState;
 
-  if (queuedUrlChange && queuedUrlChange !== state.url) {
-    globalDispatch({ type: "UPDATE_ROUTE", url: queuedUrlChange });
+  if (typeof queuedUrlChange !== "undefined" && queuedUrlChange !== state.url) {
+    const url = queuedUrlChange;
+    globalSetState((state) => ({
+      ...state,
+      hasLoaded: true,
+      url,
+    }));
     queuedUrlChange = undefined;
   }
 
   return (
-    <Context.Provider value={{ state, dispatch }}>
+    <Context.Provider value={{ state, setState }}>
       {props.children}
     </Context.Provider>
   );
