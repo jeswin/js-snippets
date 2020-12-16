@@ -5,9 +5,9 @@
 */
 
 export function hash(str: string) {
-  var i = str.length;
-  var hash1 = 5381;
-  var hash2 = 52711;
+  let i = str.length;
+  let hash1 = 5381;
+  let hash2 = 52711;
 
   while (i--) {
     const char = str.charCodeAt(i);
