@@ -4,7 +4,7 @@ const charsAndNums = characters + numbers;
 const charactersLength = characters.length;
 const charsAndNumsLength = charsAndNums.length;
 
-export default function (length: number = 32) {
+export default function (length = 32) : string {
   let result = "";
 
   for (let i = 0; i < length; i++) {
