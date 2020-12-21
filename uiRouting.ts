@@ -17,14 +17,14 @@ export type RoutingStore = {
   setState: React.Dispatch<React.SetStateAction<RoutingState>>;
 };
 
-/* Context */
-export const Context = createContext<RoutingStore>(undefined as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const Context = createContext<RoutingStore>(undefined as any); 
 
 /*
   To be called when the url needs to be changed.
   You'd usually not call this directly; instead use the <Link /> component which will internally call this.
 */
-export async function navigateTo(url: string) {
+export async function navigateTo(url: string): Promise<void> {
   window.history.pushState({}, "", url);
   updateRoute();
 }
@@ -32,7 +32,7 @@ export async function navigateTo(url: string) {
 /*
   Fixme - this is all messed up.
 */
-export async function goBack(steps = -1) {
+export async function goBack(steps = -1): Promise<void> {
   if (window.history.length > 1) {
     window.history.go(steps);
     updateRoute();
@@ -41,7 +41,7 @@ export async function goBack(steps = -1) {
 
 let queuedUrlChange: string | undefined = undefined;
 
-export async function updateRoute() {
+export async function updateRoute(): Promise<void> {
   const url = window.location.href;
   if (globalSetState && globalState.url !== url) {
     globalSetState((state) => ({
@@ -79,7 +79,7 @@ export const Link: React.FC<LinkProps> = (props: LinkProps) => {
   But instead of using this directly, us the <Link /> component.
 */
 function createClickHandler(url: string) {
-  return (ev: any) => {
+  return (ev: React.MouseEvent) => {
     window.history.pushState({}, "", url);
     updateRoute();
     ev.preventDefault();
@@ -151,7 +151,7 @@ export function match(
   ) {
     return false;
   } else {
-    let match: MatchResult = {
+    const match: MatchResult = {
       params: {},
       matchedPath: "",
       currentPath: urlObject.pathname,
@@ -184,7 +184,7 @@ export function match(
 
 const initialState: RoutingState = { url: "", hasLoaded: false };
 
-export function RoutingProvider(props: { children: ReactNode }) {
+export function RoutingProvider(props: { children: ReactNode }): JSX.Element {
   const [state, setState] = useState(initialState);
   globalState = state;
   globalSetState = setState;
