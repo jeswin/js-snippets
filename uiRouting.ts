@@ -18,13 +18,13 @@ export type RoutingStore = {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const Context = createContext<RoutingStore>(undefined as any); 
+export const Context = createContext<RoutingStore>(undefined as any);
 
 /*
   To be called when the url needs to be changed.
   You'd usually not call this directly; instead use the <Link /> component which will internally call this.
 */
-export async function navigateTo(url: string): Promise<void> {
+export function navigateTo(url: string): void {
   window.history.pushState({}, "", url);
   updateRoute();
 }
@@ -32,7 +32,7 @@ export async function navigateTo(url: string): Promise<void> {
 /*
   Fixme - this is all messed up.
 */
-export async function goBack(steps = -1): Promise<void> {
+export function goBack(steps = -1): void {
   if (window.history.length > 1) {
     window.history.go(steps);
     updateRoute();
@@ -41,7 +41,7 @@ export async function goBack(steps = -1): Promise<void> {
 
 let queuedUrlChange: string | undefined = undefined;
 
-export async function updateRoute(): Promise<void> {
+export function updateRoute(): void {
   const url = window.location.href;
   if (globalSetState && globalState.url !== url) {
     globalSetState((state) => ({
@@ -93,7 +93,7 @@ function createClickHandler(url: string) {
 export type MatchResult = {
   matchedPath: string;
   params: { [key: string]: string };
-  currentPath: string;
+  remainingPath: string;
 };
 
 export function matchExactUrl(
@@ -154,7 +154,7 @@ export function match(
     const match: MatchResult = {
       params: {},
       matchedPath: "",
-      currentPath: urlObject.pathname,
+      remainingPath: urlObject.pathname,
     };
 
     for (let i = 0; i < patternParts.length; i++) {
@@ -174,7 +174,7 @@ export function match(
       }
     }
 
-    match.currentPath = `/${pathnameParts
+    match.remainingPath = `/${pathnameParts
       .slice(patternParts.length)
       .join("/")}`;
 
