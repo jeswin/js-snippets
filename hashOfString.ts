@@ -4,7 +4,7 @@
   License: MIT
 */
 
-export function hash(str: string) {
+export function getHashCode(str: string) {
   let i = str.length;
   let hash1 = 5381;
   let hash2 = 52711;
@@ -16,5 +16,5 @@ export function hash(str: string) {
   }
 
   const num = (hash1 >>> 0) * 4096 + (hash2 >>> 0);
-  return new Number(num).toString(36);
+  return new Number(num);
 }
