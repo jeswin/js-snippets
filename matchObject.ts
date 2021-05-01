@@ -1,4 +1,4 @@
-export default function matchObject(obj: any, source: any) {
+export default function matchObject(source: any, obj: any) : boolean {
   if (typeof source !== typeof obj) {
     return false;
   }
@@ -27,4 +27,5 @@ export default function matchObject(obj: any, source: any) {
       return false;
     }
   }
+  return true;
 }
