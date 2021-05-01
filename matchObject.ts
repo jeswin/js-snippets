@@ -1,4 +1,4 @@
-export default function matchObject(source: any, obj: any) : boolean {
+export default function matchObject(obj: any, source: any) : boolean {
   if (typeof source !== typeof obj) {
     return false;
   }
