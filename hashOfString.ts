@@ -1,20 +1,16 @@
-/*
-  From: https://github.com/mstdokumaci/string-hash-64/blob/master/index.js
-  Credits: Mustafa Dokumacı
-  License: MIT
-*/
+// from https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
 
-export function getHashCode(str: string) {
-  let i = str.length;
-  let hash1 = 5381;
-  let hash2 = 52711;
-
-  while (i--) {
-    const char = str.charCodeAt(i);
-    hash1 = (hash1 * 33) ^ char;
-    hash2 = (hash2 * 33) ^ char;
+export function getHashCode(str: string) : number {
+  let hash = 0,
+    i,
+    chr;
+  if (str.length === 0) return hash;
+  
+  for (i = 0; i < str.length; i++) {
+    chr = str.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
   }
-
-  const num = (hash1 >>> 0) * 4096 + (hash2 >>> 0);
-  return new Number(num);
+  
+  return hash;
 }
